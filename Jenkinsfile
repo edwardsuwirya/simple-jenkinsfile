@@ -3,6 +3,11 @@ pipeline {
 
     tools { go 'go1.17' }
 
+    environment {
+        API_PORT = '8888'
+        DB_HOST = '10.10.100.12'
+    }
+
     stages {
         stage('build') {
             steps {
@@ -12,6 +17,12 @@ pipeline {
                     echo "Multiline shell steps"
                     ls -lah
                 '''
+            }
+        }
+        stage('delivery') {
+            steps {
+                echo "API_PORT is ${API_PORT}"
+                echo "DB_HOST is ${DB_HOST}"
             }
         }
     }
