@@ -25,6 +25,23 @@ pipeline {
                 echo "DB_HOST is ${DB_HOST}"
             }
         }
+        stage('Deploy - Staging') {
+            steps {
+                echo "Deploy to staging"
+            }
+        }
+
+        stage('Sanity check') {
+            steps {
+                input "Does the staging environment look ok?"
+            }
+        }
+
+        stage('Deploy - Production') {
+            steps {
+                echo "Deploy to production"
+            }
+        }
     }
     post {
         always {
