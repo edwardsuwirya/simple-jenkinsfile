@@ -1,0 +1,50 @@
+pipeline{
+    agent any
+    tools {
+        go 'go1.17'
+    }
+    environment {
+        GIT_URL = 'https://github.com/edwardsuwirya/go-simple-testing.git'
+        BRANCH = '02-API'
+        API_PORT = '8888'
+    }
+    stages{
+        stage("Clone source") {
+            steps {
+                git branch: "${BRANCH}", url: "${GIT_URL}"
+            }
+        }
+        stage("Preparing") {
+            steps {
+                echo "Preparing..."
+                sh 'go mod tidy'
+            }
+        }
+        stage("Testing"){
+            steps{
+                echo "Testing..."
+                sh '''
+                  CGO_ENABLED=0 go test -coverprofile coverprofile.result -v gosimpletest/...
+                  go tool cover -func coverprofile.result > $WORKSPACE/test_result
+                  COVERAGE=$(cat test_result | tail -n 1 | awk '{print $3}' | sed 's/%//')
+                  IS_PASS=$(echo "$COVERAGE>70" | bc)
+                  if [ $IS_PASS -eq 1 ]; then true; else false; fi
+                  '''
+            }
+        }
+        stage("Build project"){
+            steps{
+                echo "Image Building..."
+                sh 'docker build -t go-calc:1.0 .'
+            }
+        }
+        stage("Delivery"){
+            steps{
+                echo "Run..."
+                sh 'docker stop go-calc:1.0 || true'
+                sh 'docker rm go-calc:1.0 || true'
+                sh "docker run -d -e PORT=${API_PORT} -p ${API_PORT}:${API_PORT} --name go-calc go-calc:1.0"
+            }
+        }
+    }
+}
